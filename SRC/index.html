@@ -616,26 +616,58 @@ function setText(id, v) { document.getElementById(id).textContent = v; }
 function setW(id, w)    { document.getElementById(id).style.width = w + '%'; }
 
 // ═══════════════════════════════════════════
-//  PASTE + ADD
+//  PASTE + ADD (MEJORADO)
 // ═══════════════════════════════════════════
+
+// Función para limpiar el texto copiado (ej: "$ 1,500.00" -> 1500)
+function extractNumberFromText(txt) {
+  if (!txt) return 0;
+  // Extrae solo los dígitos del texto copiado (ignora letras, comas y símbolos)
+  const match = txt.match(/\d+/g); 
+  return match ? parseInt(match.join(''), 10) : 0;
+}
+
 async function pasteAndAdd(type) {
   let val = 0;
-  try {
-    const txt = await navigator.clipboard.readText();
-    val = parseInt(txt.trim());
-  } catch(e) {}
+  let usedClipboard = false;
 
-  if (isNaN(val) || val <= 0) {
-    const ids = { player:'inP', tie:'inT', bank:'inB' };
+  try {
+    // Intentamos leer el portapapeles
+    if (navigator.clipboard && navigator.clipboard.readText) {
+      const txt = await navigator.clipboard.readText();
+      val = extractNumberFromText(txt);
+      if (val > 0) usedClipboard = true;
+    }
+  } catch(e) {
+    console.warn("Acceso al portapapeles denegado o no disponible.", e);
+  }
+
+  const ids = { player:'inP', tie:'inT', bank:'inB' };
+  const inputEl = document.getElementById(ids[type]);
+
+  // Si no había nada válido en el portapapeles, intentamos usar lo que esté escrito en el input
+  if (val <= 0) {
     val = parseInputVal(ids[type]);
   }
 
-  if (val <= 0) { toast('No hay valor válido para añadir'); return; }
+  // Si al final no hay un valor válido, mostramos alerta y salimos
+  if (val <= 0) { 
+    toast('Copia un número válido o escríbelo primero'); 
+    inputEl.focus();
+    return; 
+  }
 
+  // Registramos el voto
   commitVote(type, val);
-  const ids2 = { player:'inP', tie:'inT', bank:'inB' };
-  document.getElementById(ids2[type]).value = '';
-  document.getElementById(ids2[type]).focus();
+
+  // Damos feedback visual de que se pegó correctamente
+  if (usedClipboard) {
+    toast(`+${val} pegado desde el portapapeles`);
+  }
+
+  // Limpiamos el input y lo volvemos a enfocar
+  inputEl.value = '';
+  inputEl.focus();
 }
 
 function onEnter(e, type) { if (e.key === 'Enter') commitFromInput(type); }

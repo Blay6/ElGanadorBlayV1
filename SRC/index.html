@@ -720,10 +720,15 @@ function processRound() {
   const pctB = (bank/total)*100;
 
   let winner = null;
-  if (pctP >= T) winner = 'player';
-  else if (pctB >= T) winner = 'bank';
+  
+  // NUEVA REGLA: Debe haber al menos un voto (o monto > 0) para Jugador Y Banca
+  if (player > 0 && bank > 0) {
+    if (pctP >= T) winner = 'player';
+    else if (pctB >= T) winner = 'bank';
+  }
 
-  showResult(winner, pctP, pctB, T, total);
+  // Pasamos los valores de player y bank a showResult para poder mostrar el mensaje correcto
+  showResult(winner, pctP, pctB, T, player, bank);
 
   const entry = {
     id: S.round,
@@ -739,7 +744,7 @@ function processRound() {
   renderHistory();
 }
 
-function showResult(winner, pctP, pctB, T) {
+function showResult(winner, pctP, pctB, T, playerAmt, bankAmt) {
   const rz     = document.getElementById('rzEl');
   const title  = document.getElementById('rzTitle');
   const sub    = document.getElementById('rzSub');
@@ -770,7 +775,13 @@ function showResult(winner, pctP, pctB, T) {
     rz.classList.add('rz-none');
     title.style.color = 'var(--text-bright)';
     title.textContent = 'Sin Predicción Clara';
-    sub.textContent   = `Ninguno alcanzó el ${T}%`;
+    
+    // Adaptamos el mensaje de error según la razón por la que no hay predicción
+    if (playerAmt === 0 || bankAmt === 0) {
+      sub.textContent = 'Se requiere al menos un ingreso en Jugador y Banca';
+    } else {
+      sub.textContent = `Ninguno alcanzó el ${T}%`;
+    }
   }
 }
 

@@ -1,0 +1,932 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>THE WINNER</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&family=JetBrains+Mono:wght@400;500&family=Outfit:wght@400;600;700;800&display=swap" rel="stylesheet">
+<style>
+  :root {
+    /* Paleta Premium Dark */
+    --bg-base:      #09090b; /* Zinc 950 */
+    --bg-panel:     #121214; 
+    --bg-card:      #18181b; /* Zinc 900 */
+    --bg-card-hover:#202024;
+    --border:       rgba(255, 255, 255, 0.06);
+    --border-light: rgba(255, 255, 255, 0.12);
+    
+    /* Colores Principales */
+    --player:       #3b82f6; /* AZUL */
+    --tie:          #10b981; /* VERDE ESMERALDA */
+    --bank:         #ef4444; /* ROJO */
+    --accent:       #3b82f6;
+    
+    /* Textos */
+    --text-bright:  #f4f4f5;
+    --text:         #a1a1aa;
+    --text-dim:     #71717a;
+    
+    /* LEDs */
+    --red-led:      #ff3355;
+    --green-led:    #00e676;
+    
+    /* Radios redondeados suaves */
+    --radius-lg:    20px;
+    --radius:       14px;
+    --radius-sm:    8px;
+    
+    /* Sombras premium */
+    --shadow-sm:    0 2px 8px rgba(0,0,0,0.4);
+    --shadow-md:    0 8px 24px rgba(0,0,0,0.4);
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: 'Inter', sans-serif;
+    background: var(--bg-base);
+    color: var(--text);
+    min-height: 100vh;
+    overflow-x: hidden;
+    /* Efecto de luz ambiental sutil de fondo */
+    background-image: 
+      radial-gradient(circle at 15% 0%, rgba(59, 130, 246, 0.04) 0%, transparent 40%),
+      radial-gradient(circle at 85% 100%, rgba(239, 68, 68, 0.03) 0%, transparent 40%);
+  }
+
+  .app { position: relative; z-index: 1; max-width: 1280px; margin: 0 auto; padding: 24px 16px; }
+
+  /* ── HEADER Premium ── */
+  .header {
+    display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 16px;
+    padding: 16px 24px;
+    background: rgba(18, 18, 20, 0.6);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-lg);
+    margin-bottom: 24px;
+    box-shadow: var(--shadow-sm);
+  }
+  .logo {
+    font-family: 'Outfit', sans-serif; font-size: 26px; font-weight: 800;
+    letter-spacing: 1px; color: var(--text-bright);
+    display: flex; align-items: center; gap: 6px;
+  }
+  .logo span { color: var(--accent); }
+  .logo-sub { font-size: 11px; color: var(--text-dim); font-weight: 500; letter-spacing: 0.5px; margin-top: 2px; text-transform: uppercase;}
+  .header-right { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
+
+  .streak-box {
+    display: flex; align-items: center; gap: 14px;
+    background: var(--bg-card); border: 1px solid var(--border);
+    padding: 8px 16px; border-radius: 100px;
+  }
+  .streak-lbl { font-size: 11px; color: var(--text-dim); font-weight: 600; letter-spacing: 0.5px; text-transform: uppercase; }
+  .streak-num {
+    font-family: 'Outfit', sans-serif; font-size: 18px; font-weight: 700;
+    color: var(--text-bright); min-width: 20px; text-align: center;
+  }
+  .led {
+    width: 10px; height: 10px; border-radius: 50%;
+    background: #27272a; transition: all .4s ease;
+  }
+  .led.red { background: var(--red-led); box-shadow: 0 0 10px var(--red-led); }
+  .led.green { background: var(--green-led); box-shadow: 0 0 10px var(--green-led); }
+
+  .btn-cfg {
+    background: var(--bg-card); border: 1px solid var(--border); color: var(--text-bright);
+    padding: 10px 16px; border-radius: 100px; cursor: pointer;
+    font-family: 'Inter', sans-serif; font-size: 13px; font-weight: 500;
+    transition: all .2s; display: flex; align-items: center; gap: 8px;
+  }
+  .btn-cfg:hover { background: var(--bg-card-hover); border-color: var(--border-light); }
+
+  /* ── LAYOUT ── */
+  .layout { display: grid; grid-template-columns: 1fr 380px; gap: 24px; }
+  @media(max-width:940px) { .layout { grid-template-columns: 1fr; } }
+
+  /* ── PANEL Base ── */
+  .panel {
+    background: var(--bg-panel); border: 1px solid var(--border);
+    border-radius: var(--radius-lg); overflow: hidden;
+    box-shadow: var(--shadow-sm);
+  }
+  .ph {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 16px 20px; border-bottom: 1px solid var(--border); background: var(--bg-card);
+  }
+  .ph-title { font-family: 'Outfit', sans-serif; font-size: 13px; font-weight: 600; letter-spacing: 1px; color: var(--text-bright); text-transform: uppercase;}
+  .badge {
+    font-family: 'JetBrains Mono', monospace; font-size: 11px; font-weight: 500;
+    padding: 4px 10px; border-radius: 100px;
+    background: rgba(255,255,255,0.05); color: var(--text); border: 1px solid var(--border);
+  }
+  .pb { padding: 24px; }
+
+  /* ── RESULT BAR (sticky top) ── */
+  .result-bar-wrap { position: sticky; top: 16px; z-index: 50; margin-bottom: 24px; }
+  .result-zone {
+    border-radius: var(--radius-lg);
+    border: 1px solid var(--border);
+    background: rgba(18, 18, 20, 0.75);
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
+    padding: 16px 24px; text-align: center;
+    display: flex; flex-direction: row; align-items: center; justify-content: center;
+    gap: 20px; flex-wrap: wrap; transition: all .4s ease;
+    box-shadow: var(--shadow-md);
+  }
+  .result-zone.rz-player {
+    background: rgba(23, 37, 84, 0.7); border-color: rgba(59, 130, 246, 0.3);
+    box-shadow: 0 8px 32px rgba(59, 130, 246, 0.15);
+  }
+  .result-zone.rz-bank {
+    background: rgba(69, 10, 10, 0.7); border-color: rgba(239, 68, 68, 0.3);
+    box-shadow: 0 8px 32px rgba(239, 68, 68, 0.15);
+  }
+  .result-zone.rz-none {
+    background: rgba(39, 39, 42, 0.7); border-color: var(--border-light);
+  }
+
+  .rz-title {
+    font-family: 'Outfit', sans-serif; font-size: clamp(16px, 2.5vw, 22px); font-weight: 800;
+    letter-spacing: 1px; transition: color .3s; line-height: 1; text-transform: uppercase;
+  }
+  .rz-divider { width: 1px; height: 30px; background: var(--border-light); flex-shrink: 0; }
+  .rz-sub { font-size: 13px; color: var(--text-bright); opacity: 0.8; }
+  .rz-idle-label { font-size: 13px; color: var(--text-dim); font-weight: 500; letter-spacing: 1px; }
+
+  /* ── ASSIGN BUTTONS inside result bar ── */
+  .rz-assign-wrap { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; justify-content: center; }
+  .rz-assign-lbl { font-size: 11px; color: var(--text-dim); text-transform: uppercase; font-weight: 600;}
+  .btn-rz {
+    font-family: 'Outfit', sans-serif; font-size: 12px; font-weight: 600; letter-spacing: 0.5px;
+    border: none; border-radius: 100px; padding: 8px 18px; cursor: pointer;
+    transition: all .2s; white-space: nowrap; color: #fff;
+  }
+  .btn-rz:hover { transform: translateY(-2px); filter: brightness(1.1); box-shadow: 0 4px 12px rgba(0,0,0,0.3); }
+  .btn-rz:active { transform: scale(0.96); }
+  .btn-rz.rz-p { background: var(--player); }
+  .btn-rz.rz-b { background: var(--bank); }
+  .btn-rz.rz-t { background: var(--tie); }
+
+  /* ── VOTE COLUMNS ── */
+  .vgrid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 16px; margin-bottom: 24px; }
+  @media(max-width:600px) { .vgrid { grid-template-columns: 1fr; } }
+
+  .vcol {
+    background: var(--bg-card); border: 1px solid var(--border); border-radius: var(--radius);
+    padding: 20px 16px; display: flex; flex-direction: column; gap: 16px;
+    position: relative; transition: border-color .3s, background .3s;
+  }
+  .vcol:hover { background: var(--bg-card-hover); }
+  .vcol.vp { --vc: var(--player); }
+  .vcol.vt { --vc: var(--tie); }
+  .vcol.vb { --vc: var(--bank); }
+
+  .vc-header { display: flex; justify-content: space-between; align-items: center; }
+  .vc-name {
+    font-family: 'Outfit', sans-serif; font-size: 13px; font-weight: 600;
+    letter-spacing: 1px; color: var(--vc);
+  }
+  .vc-pct { font-family: 'JetBrains Mono', monospace; font-size: 12px; color: var(--text); background: rgba(255,255,255,0.05); padding: 4px 8px; border-radius: 6px; }
+  
+  .vc-num {
+    font-family: 'Outfit', sans-serif; font-size: clamp(36px, 5vw, 48px); font-weight: 700;
+    color: var(--text-bright); text-align: left; line-height: 1; transition: transform .15s;
+  }
+  .vc-num.bump { transform: scale(1.05); color: var(--vc); }
+  
+  .vc-track { height: 6px; background: rgba(0,0,0,0.5); border-radius: 100px; overflow: hidden; }
+  .vc-fill { height: 100%; background: var(--vc); border-radius: 100px; transition: width .5s cubic-bezier(.4,0,.2,1); }
+
+  /* INPUT ROW */
+  .inp-row { display: flex; gap: 8px; margin-top: auto; }
+  .vinp {
+    flex: 1; background: rgba(0,0,0,0.3); border: 1px solid var(--border);
+    color: var(--text-bright); padding: 12px; border-radius: var(--radius-sm);
+    font-family: 'Outfit', sans-serif; font-size: 16px; font-weight: 600;
+    text-align: center; outline: none; width: 100%; transition: all .2s;
+    -moz-appearance: textfield;
+  }
+  .vinp::placeholder { color: var(--text-dim); font-weight: 400; }
+  .vinp::-webkit-outer-spin-button, .vinp::-webkit-inner-spin-button { -webkit-appearance: none; }
+  .vinp:focus { border-color: var(--vc); background: rgba(0,0,0,0.5); box-shadow: 0 0 0 3px rgba(255,255,255,0.03); }
+
+  .btn-plus {
+    background: rgba(255,255,255,0.05); color: var(--text-bright); border: 1px solid var(--border); border-radius: var(--radius-sm);
+    width: 44px; height: 44px; font-size: 18px; font-weight: 400; cursor: pointer;
+    display: flex; align-items: center; justify-content: center; flex-shrink: 0;
+    transition: all .2s;
+  }
+  .btn-plus:hover { background: var(--vc); border-color: var(--vc); color: #fff; }
+  .btn-plus:active { transform: scale(0.95); }
+
+  /* PROCESS / RESET */
+  .action-row { display: flex; gap: 12px; align-items: center; flex-wrap: wrap; }
+  .btn-proc {
+    flex: 2; background: var(--text-bright); color: var(--bg-base); border: none;
+    padding: 16px 24px; border-radius: var(--radius-sm);
+    font-family: 'Outfit', sans-serif; font-size: 14px; font-weight: 700; letter-spacing: 0.5px;
+    cursor: pointer; transition: all .2s; min-width: 150px;
+  }
+  .btn-proc:hover { background: #fff; transform: translateY(-1px); box-shadow: 0 4px 14px rgba(255,255,255,0.15); }
+  .btn-proc:active { transform: translateY(1px); }
+  
+  .btn-rst {
+    flex: 1; background: transparent; border: 1px solid var(--border-light); color: var(--text);
+    padding: 16px; border-radius: var(--radius-sm); min-width: 120px;
+    font-family: 'Inter', sans-serif; font-size: 13px; font-weight: 500;
+    cursor: pointer; transition: all .2s;
+  }
+  .btn-rst:hover { background: rgba(239, 68, 68, 0.1); border-color: var(--bank); color: var(--bank); }
+
+  /* STATS */
+  .stats-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; }
+  .sbox { background: var(--bg-card); border: 1px solid var(--border); border-radius: var(--radius-sm); padding: 16px; text-align: center; }
+  .snum { font-family: 'Outfit', sans-serif; font-size: 24px; font-weight: 700; line-height: 1; margin-bottom: 6px; }
+  .slbl { font-size: 10px; color: var(--text-dim); font-weight: 600; letter-spacing: 0.5px; text-transform: uppercase; }
+
+  /* HISTORY */
+  .hlist { display: flex; flex-direction: column; gap: 10px; max-height: 580px; overflow-y: auto; padding-right: 6px; }
+  .hlist::-webkit-scrollbar { width: 4px; }
+  .hlist::-webkit-scrollbar-track { background: transparent; }
+  .hlist::-webkit-scrollbar-thumb { background: var(--border-light); border-radius: 10px; }
+
+  .hitem {
+    background: var(--bg-card); border: 1px solid var(--border);
+    border-radius: var(--radius-sm); padding: 14px;
+    animation: slideIn .3s ease;
+  }
+  @keyframes slideIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+  .hrow { display: flex; align-items: center; justify-content: space-between; gap: 8px; flex-wrap: wrap; margin-bottom: 12px; }
+  .hrnd { font-family: 'JetBrains Mono', monospace; font-size: 11px; color: var(--text-dim); }
+  
+  .hpred { font-family: 'Inter', sans-serif; font-size: 11px; font-weight: 600; padding: 4px 10px; border-radius: 100px; }
+  .hpred.pp { background: rgba(59,130,246,0.1); color: var(--player); }
+  .hpred.pb { background: rgba(239,68,68,0.1); color: var(--bank); }
+  .hpred.pn { background: rgba(255,255,255,0.05); color: var(--text); }
+  
+  .hout { font-family: 'Inter', sans-serif; font-size: 11px; font-weight: 600; display: flex; align-items: center; gap: 4px; }
+  .hout.win { color: var(--tie); } /* Verde para victoria */
+  .hout.loss { color: var(--bank); }
+  .hout.tie { color: var(--text); }
+  .hout.pend { color: var(--text-dim); font-style: italic; }
+  
+  .hpills { display: flex; gap: 6px; flex-wrap: wrap; }
+  .hpill { font-family: 'JetBrains Mono', monospace; font-size: 10px; padding: 4px 8px; border-radius: 6px; background: rgba(0,0,0,0.3); border: 1px solid var(--border); }
+  
+  .hempty { text-align: center; padding: 48px 20px; color: var(--text-dim); font-size: 13px; line-height: 1.6; }
+
+  /* CONFIG MODAL */
+  .overlay {
+    position: fixed; inset: 0; background: rgba(0,0,0,0.8); backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+    z-index: 100; display: none; align-items: center; justify-content: center; padding: 16px;
+  }
+  .overlay.show { display: flex; animation: fadeIn .2s ease; }
+  @keyframes fadeIn { from{opacity:0;} to{opacity:1;} }
+  
+  .modal {
+    background: var(--bg-panel); border: 1px solid var(--border-light);
+    border-radius: var(--radius-lg); width: 100%; max-width: 480px;
+    box-shadow: var(--shadow-md); overflow: hidden;
+    animation: mIn .3s cubic-bezier(0.16, 1, 0.3, 1);
+  }
+  @keyframes mIn { from { opacity: 0; transform: translateY(20px) scale(0.98); } to { opacity: 1; transform: translateY(0) scale(1); } }
+  
+  .mh {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 20px 24px; border-bottom: 1px solid var(--border); background: rgba(255,255,255,0.02);
+  }
+  .mh-title { font-family: 'Outfit', sans-serif; font-size: 14px; font-weight: 600; color: var(--text-bright); }
+  .btn-x {
+    background: transparent; border: none; color: var(--text-dim);
+    width: 32px; height: 32px; border-radius: 8px; cursor: pointer; font-size: 18px;
+    display: flex; align-items: center; justify-content: center; transition: all .2s;
+  }
+  .btn-x:hover { background: rgba(255,255,255,0.05); color: var(--text-bright); }
+  .mb { padding: 24px; display: flex; flex-direction: column; gap: 24px; }
+
+  .csec-title { font-size: 11px; font-weight: 600; text-transform: uppercase; color: var(--text-dim); margin-bottom: 12px; letter-spacing: 0.5px; }
+  .crow { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 12px; }
+  .clbl { font-size: 14px; font-weight: 500; color: var(--text-bright); }
+  .cslbl { font-size: 12px; color: var(--text-dim); margin-top: 4px; }
+  .ninp {
+    background: rgba(0,0,0,0.3); border: 1px solid var(--border); color: var(--text-bright);
+    padding: 10px 12px; border-radius: var(--radius-sm);
+    font-family: 'JetBrains Mono', monospace; font-size: 14px; width: 70px; text-align: center; outline: none; transition: all .2s;
+  }
+  .ninp:focus { border-color: var(--text-bright); }
+
+  .tog-row {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 12px 16px; background: rgba(255,255,255,0.02); border: 1px solid var(--border);
+    border-radius: var(--radius-sm); margin-bottom: 8px;
+  }
+  .tog-name { font-size: 14px; font-weight: 500; color: var(--text-bright); }
+  .tog-desc { font-size: 12px; color: var(--text-dim); margin-top: 4px; }
+  
+  /* Toggle Switch Premium */
+  .switch { position: relative; width: 44px; height: 24px; flex-shrink: 0; }
+  .switch input { opacity: 0; width: 0; height: 0; }
+  .slider { position: absolute; inset: 0; background: rgba(0,0,0,0.5); border: 1px solid var(--border); border-radius: 20px; cursor: pointer; transition: all .3s; }
+  .slider::before { content: ''; position: absolute; width: 16px; height: 16px; left: 3px; top: 50%; transform: translateY(-50%); background: var(--text-dim); border-radius: 50%; transition: all .3s cubic-bezier(0.4, 0, 0.2, 1); }
+  .switch input:checked + .slider { background: var(--player); border-color: var(--player); }
+  .switch input:checked + .slider::before { transform: translate(20px, -50%); background: #fff; }
+
+  .led-picks { display: flex; gap: 8px; }
+  .ledo {
+    flex: 1; padding: 10px; border-radius: var(--radius-sm); border: 1px solid var(--border);
+    cursor: pointer; font-size: 13px; font-weight: 500; text-align: center;
+    background: transparent; color: var(--text); transition: all .2s;
+  }
+  .ledo.sr { border-color: var(--bank); color: var(--bank); background: rgba(239, 68, 68, 0.05); }
+  .ledo.sg { border-color: var(--tie); color: var(--tie); background: rgba(16, 185, 129, 0.05); }
+
+  .btn-save {
+    width: 100%; background: var(--text-bright); color: var(--bg-base); border: none;
+    padding: 16px; border-radius: var(--radius-sm); margin-top: 8px;
+    font-family: 'Outfit', sans-serif; font-size: 14px; font-weight: 600;
+    cursor: pointer; transition: all .2s;
+  }
+  .btn-save:hover { background: #fff; transform: translateY(-1px); box-shadow: 0 4px 12px rgba(255,255,255,0.1); }
+
+  /* TOAST */
+  .toast {
+    position: fixed; bottom: 24px; right: 24px;
+    background: var(--text-bright); color: var(--bg-base);
+    padding: 14px 20px; border-radius: var(--radius-sm);
+    font-family: 'Inter', sans-serif; font-size: 14px; font-weight: 500;
+    box-shadow: var(--shadow-md); z-index: 200;
+    animation: tIn .3s cubic-bezier(0.16, 1, 0.3, 1); display: none;
+  }
+  .toast.show { display: block; }
+  @keyframes tIn { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+
+  @media(max-width: 440px) {
+    .header { padding: 16px; }
+    .header-right { width: 100%; justify-content: space-between; }
+  }
+</style>
+</head>
+<body>
+<div class="app">
+
+  <!-- HEADER -->
+  <header class="header">
+    <div>
+      <div class="logo">THE<span>WINNER</span></div>
+      <div class="logo-sub">Panel de Análisis y Predicción</div>
+    </div>
+    <div class="header-right">
+      <div class="streak-box">
+        <div>
+          <span class="streak-lbl">Racha</span>
+          <span class="streak-num" id="streakVal">0</span>
+        </div>
+        <div class="led" id="ledEl"></div>
+      </div>
+      <button class="btn-cfg" onclick="openCfg()">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+        Configuración
+      </button>
+    </div>
+  </header>
+
+  <!-- STICKY RESULT BAR -->
+  <div class="result-bar-wrap">
+    <div class="result-zone rz-none" id="rzEl">
+      <div class="rz-idle-label" id="rzIdle">Esperando ingreso de votos...</div>
+      <div class="rz-title" id="rzTitle" style="display:none"></div>
+      <div class="rz-divider" id="rzDiv" style="display:none"></div>
+      <div class="rz-sub" id="rzSub" style="display:none"></div>
+      <div class="rz-divider" id="rzDiv2" style="display:none"></div>
+      <div class="rz-assign-wrap" id="rzAssign" style="display:none">
+        <span class="rz-assign-lbl">Registrar resultado:</span>
+        <button class="btn-rz rz-p" onclick="assignR(0,'player')">Jugador</button>
+        <button class="btn-rz rz-b" onclick="assignR(0,'bank')">Banca</button>
+        <button class="btn-rz rz-t" onclick="assignR(0,'tie')">Empate</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="layout">
+    <!-- LEFT -->
+    <div>
+      <!-- VOTING PANEL -->
+      <div class="panel" style="margin-bottom:24px;">
+        <div class="ph">
+          <span class="ph-title">Mesa de Votación</span>
+          <span class="badge" id="roundBadge">Ronda 1</span>
+        </div>
+        <div class="pb">
+
+          <!-- COLUMNS -->
+          <div class="vgrid">
+            <!-- JUGADOR -->
+            <div class="vcol vp">
+              <div class="vc-header">
+                <span class="vc-name">JUGADOR</span>
+                <span class="vc-pct" id="ppP">0.0%</span>
+              </div>
+              <div class="vc-num" id="dnP">0</div>
+              <div class="vc-track"><div class="vc-fill" id="bP" style="width:0%"></div></div>
+              <div class="inp-row">
+                <input type="number" class="vinp" id="inP" placeholder="Monto" min="0" oninput="liveCalc()" onkeydown="onEnter(event,'player')">
+                <button class="btn-plus" onclick="pasteAndAdd('player')" title="Pegar y añadir">+</button>
+              </div>
+            </div>
+            <!-- EMPATE -->
+            <div class="vcol vt">
+              <div class="vc-header">
+                <span class="vc-name">EMPATE</span>
+                <span class="vc-pct" id="ppT">0.0%</span>
+              </div>
+              <div class="vc-num" id="dnT">0</div>
+              <div class="vc-track"><div class="vc-fill" id="bT" style="width:0%"></div></div>
+              <div class="inp-row">
+                <input type="number" class="vinp" id="inT" placeholder="Monto" min="0" oninput="liveCalc()" onkeydown="onEnter(event,'tie')">
+                <button class="btn-plus" onclick="pasteAndAdd('tie')" title="Pegar y añadir">+</button>
+              </div>
+            </div>
+            <!-- BANCA -->
+            <div class="vcol vb">
+              <div class="vc-header">
+                <span class="vc-name">BANCA</span>
+                <span class="vc-pct" id="ppB">0.0%</span>
+              </div>
+              <div class="vc-num" id="dnB">0</div>
+              <div class="vc-track"><div class="vc-fill" id="bB" style="width:0%"></div></div>
+              <div class="inp-row">
+                <input type="number" class="vinp" id="inB" placeholder="Monto" min="0" oninput="liveCalc()" onkeydown="onEnter(event,'bank')">
+                <button class="btn-plus" onclick="pasteAndAdd('bank')" title="Pegar y añadir">+</button>
+              </div>
+            </div>
+          </div>
+
+          <div class="action-row">
+            <button class="btn-proc" onclick="processRound()">Procesar Ronda</button>
+            <button class="btn-rst" onclick="hardReset()">Resetear Valores</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- STATS -->
+      <div class="panel">
+        <div class="ph">
+          <span class="ph-title">Rendimiento</span>
+          <span class="badge" id="totalB" style="border:none; background:transparent; padding:0;">0 Totales</span>
+        </div>
+        <div class="pb" style="padding:16px 24px;">
+          <div class="stats-grid">
+            <div class="sbox"><div class="snum" style="color:var(--tie)" id="sW">0</div><div class="slbl">Aciertos</div></div>
+            <div class="sbox"><div class="snum" style="color:var(--bank)" id="sL">0</div><div class="slbl">Fallos</div></div>
+            <div class="sbox"><div class="snum" style="color:var(--text)" id="sT">0</div><div class="slbl">Empates</div></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- RIGHT: HISTORY -->
+    <div class="panel">
+      <div class="ph">
+        <span class="ph-title">Historial Operativo</span>
+        <span class="badge" id="hCount" style="border:none; background:transparent; padding:0;">0 Registros</span>
+      </div>
+      <div class="pb" style="padding:16px;">
+        <div class="hlist" id="hList">
+          <div class="hempty">El historial está vacío.<br>Procesa tu primera ronda para iniciar.</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- CONFIG MODAL -->
+<div class="overlay" id="cfgModal">
+  <div class="modal">
+    <div class="mh">
+      <span class="mh-title">Configuración del Sistema</span>
+      <button class="btn-x" onclick="closeCfg()">✕</button>
+    </div>
+    <div class="mb">
+      <div>
+        <div class="csec-title">Umbral de Votación</div>
+        <div class="crow">
+          <div><div class="clbl">Porcentaje para victoria</div><div class="cslbl">Define la ventaja necesaria</div></div>
+          <div style="display:flex;align-items:center;gap:8px">
+            <input type="number" class="ninp" id="cfgTh" value="55" min="1" max="99">
+            <span style="font-family:'Outfit';font-weight:600;color:var(--text-dim)">%</span>
+          </div>
+        </div>
+      </div>
+      
+      <div>
+        <div class="csec-title">Indicador de Racha (LED)</div>
+        <div style="display:flex;flex-direction:column;gap:4px;">
+          <div class="crow"><div><div class="clbl">Activar tras Fallos</div></div><input type="number" class="ninp" id="cfgLN" value="3" min="1"></div>
+          <div class="crow"><div><div class="clbl">Activar tras Aciertos</div></div><input type="number" class="ninp" id="cfgWN" value="3" min="1"></div>
+          <div class="crow"><div><div class="clbl">Activar tras Empates</div></div><input type="number" class="ninp" id="cfgTN" value="3" min="1"></div>
+        </div>
+      </div>
+      
+      <div>
+        <div class="csec-title">Seguimiento de Tipos</div>
+        <div style="display:flex;flex-direction:column;">
+          <div class="tog-row">
+            <div><div class="tog-name">Registrar Fallos</div><div class="tog-desc">Evaluar racha negativa</div></div>
+            <label class="switch"><input type="checkbox" id="togL" checked><span class="slider"></span></label>
+          </div>
+          <div class="tog-row">
+            <div><div class="tog-name">Registrar Aciertos</div><div class="tog-desc">Evaluar racha positiva</div></div>
+            <label class="switch"><input type="checkbox" id="togW"><span class="slider"></span></label>
+          </div>
+          <div class="tog-row">
+            <div><div class="tog-name">Registrar Empates</div><div class="tog-desc">Evaluar racha neutra</div></div>
+            <label class="switch"><input type="checkbox" id="togT"><span class="slider"></span></label>
+          </div>
+        </div>
+      </div>
+
+      <div>
+        <div class="csec-title">Color de Alerta</div>
+        <div class="led-picks">
+          <button class="ledo sr" id="lRed" onclick="pickLed('red')">Rojo Alerta</button>
+          <button class="ledo" id="lGreen" onclick="pickLed('green')">Verde Seguro</button>
+        </div>
+      </div>
+      <button class="btn-save" onclick="saveCfg()">Guardar Preferencias</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+// ═══════════════════════════════════════════
+//  STATE
+// ═══════════════════════════════════════════
+const S = {
+  round: 1,
+  votes: { player:0, tie:0, bank:0 },
+  history: [],
+  stats: { wins:0, losses:0, ties:0 },
+  streak: 0,
+  streakType: null,
+  processed: false,
+  cfg: {
+    threshold: 55,
+    lossN: 3, winN: 3, tieN: 3,
+    trackLoss: true, trackWin: false, trackTie: false,
+    ledColor: 'red'
+  }
+};
+
+// ═══════════════════════════════════════════
+//  LIVE CALC
+// ═══════════════════════════════════════════
+function liveCalc() {
+  const vP = parseInputVal('inP');
+  const vT = parseInputVal('inT');
+  const vB = parseInputVal('inB');
+  const tempTotal = (S.votes.player + vP) + (S.votes.tie + vT) + (S.votes.bank + vB);
+  updateDisplay(S.votes.player + vP, S.votes.tie + vT, S.votes.bank + vB, tempTotal);
+}
+
+function parseInputVal(id) {
+  const v = parseInt(document.getElementById(id).value);
+  return isNaN(v) || v < 0 ? 0 : v;
+}
+
+function updateDisplay(p, t, b, total) {
+  const pct = v => total > 0 ? ((v/total)*100) : 0;
+  const fmt = v => pct(v).toFixed(1) + '%';
+  const w   = v => total > 0 ? Math.min((v/total)*100, 100) : 0;
+
+  setText('dnP', p); setText('dnT', t); setText('dnB', b);
+  setText('ppP', fmt(p)); setText('ppT', fmt(t)); setText('ppB', fmt(b));
+  setW('bP', w(p)); setW('bT', w(t)); setW('bB', w(b));
+}
+
+function setText(id, v) { document.getElementById(id).textContent = v; }
+function setW(id, w)    { document.getElementById(id).style.width = w + '%'; }
+
+// ═══════════════════════════════════════════
+//  PASTE + ADD
+// ═══════════════════════════════════════════
+async function pasteAndAdd(type) {
+  let val = 0;
+  try {
+    const txt = await navigator.clipboard.readText();
+    val = parseInt(txt.trim());
+  } catch(e) {}
+
+  if (isNaN(val) || val <= 0) {
+    const ids = { player:'inP', tie:'inT', bank:'inB' };
+    val = parseInputVal(ids[type]);
+  }
+
+  if (val <= 0) { toast('No hay valor válido para añadir'); return; }
+
+  commitVote(type, val);
+  const ids2 = { player:'inP', tie:'inT', bank:'inB' };
+  document.getElementById(ids2[type]).value = '';
+  document.getElementById(ids2[type]).focus();
+}
+
+function onEnter(e, type) { if (e.key === 'Enter') commitFromInput(type); }
+
+function commitFromInput(type) {
+  const ids = { player:'inP', tie:'inT', bank:'inB' };
+  const val = parseInputVal(ids[type]);
+  if (val <= 0) return;
+  commitVote(type, val);
+  document.getElementById(ids[type]).value = '';
+  document.getElementById(ids[type]).focus();
+}
+
+function commitVote(type, val) {
+  S.votes[type] += val;
+  const numEls = { player:'dnP', tie:'dnT', bank:'dnB' };
+  const el = document.getElementById(numEls[type]);
+  el.classList.remove('bump');
+  void el.offsetWidth;
+  el.classList.add('bump');
+  setTimeout(() => el.classList.remove('bump'), 200);
+  refreshDisplay();
+}
+
+function refreshDisplay() {
+  const { player, tie, bank } = S.votes;
+  const total = player + tie + bank;
+  updateDisplay(player, tie, bank, total);
+}
+
+// ═══════════════════════════════════════════
+//  PROCESS ROUND
+// ═══════════════════════════════════════════
+function processRound() {
+  ['player','tie','bank'].forEach(t => {
+    const ids = { player:'inP', tie:'inT', bank:'inB' };
+    const v = parseInputVal(ids[t]);
+    if (v > 0) { S.votes[t] += v; document.getElementById(ids[t]).value = ''; }
+  });
+
+  const { player, tie, bank } = S.votes;
+  const total = player + tie + bank;
+  if (total === 0) { toast('Añade votos antes de procesar'); return; }
+  if (S.processed) { toast('Ronda ya procesada — asigna resultado en el panel'); return; }
+
+  refreshDisplay();
+
+  const T = S.cfg.threshold;
+  const pctP = (player/total)*100;
+  const pctB = (bank/total)*100;
+
+  let winner = null;
+  if (pctP >= T) winner = 'player';
+  else if (pctB >= T) winner = 'bank';
+
+  showResult(winner, pctP, pctB, T, total);
+
+  const entry = {
+    id: S.round,
+    votes: { ...S.votes }, total,
+    prediction: winner,
+    pctP: pctP.toFixed(1),
+    pctB: pctB.toFixed(1),
+    pctT: ((tie/total)*100).toFixed(1),
+    result: null
+  };
+  S.history.unshift(entry);
+  S.processed = true;
+  renderHistory();
+}
+
+function showResult(winner, pctP, pctB, T) {
+  const rz     = document.getElementById('rzEl');
+  const title  = document.getElementById('rzTitle');
+  const sub    = document.getElementById('rzSub');
+  const idle   = document.getElementById('rzIdle');
+  const div1   = document.getElementById('rzDiv');
+  const div2   = document.getElementById('rzDiv2');
+  const assign = document.getElementById('rzAssign');
+
+  idle.style.display   = 'none';
+  title.style.display  = 'block';
+  sub.style.display    = 'block';
+  div1.style.display   = 'block';
+  div2.style.display   = 'block';
+  assign.style.display = 'flex';
+
+  rz.className = 'result-zone';
+  if (winner === 'player') {
+    rz.classList.add('rz-player');
+    title.style.color = 'var(--player)';
+    title.textContent = 'Jugador Gana';
+    sub.textContent   = `${pctP.toFixed(1)}% · umbral ${T}%`;
+  } else if (winner === 'bank') {
+    rz.classList.add('rz-bank');
+    title.style.color = 'var(--bank)';
+    title.textContent = 'Banca Gana';
+    sub.textContent   = `${pctB.toFixed(1)}% · umbral ${T}%`;
+  } else {
+    rz.classList.add('rz-none');
+    title.style.color = 'var(--text-bright)';
+    title.textContent = 'Sin Predicción Clara';
+    sub.textContent   = `Ninguno alcanzó el ${T}%`;
+  }
+}
+
+function softReset() {
+  S.votes = { player:0, tie:0, bank:0 };
+  S.processed = false;
+  S.round++;
+  document.getElementById('roundBadge').textContent = `Ronda ${S.round}`;
+  refreshDisplay();
+  const rz = document.getElementById('rzEl');
+  rz.className = 'result-zone rz-none';
+  document.getElementById('rzIdle').style.display   = 'block';
+  document.getElementById('rzTitle').style.display  = 'none';
+  document.getElementById('rzSub').style.display    = 'none';
+  document.getElementById('rzDiv').style.display    = 'none';
+  document.getElementById('rzDiv2').style.display   = 'none';
+  document.getElementById('rzAssign').style.display = 'none';
+}
+
+function hardReset() {
+  if (!S.processed && (S.votes.player+S.votes.tie+S.votes.bank > 0)) {
+    if (!confirm('¿Limpiar datos de la ronda actual?')) return;
+  }
+  const wasProcessed = S.processed;
+  softReset();
+  if (!wasProcessed) S.round--; 
+}
+
+// ═══════════════════════════════════════════
+//  HISTORY
+// ═══════════════════════════════════════════
+function renderHistory() {
+  const el = document.getElementById('hList');
+  document.getElementById('hCount').textContent = S.history.length;
+  if (!S.history.length) {
+    el.innerHTML = '<div class="hempty">El historial está vacío.<br>Procesa tu primera ronda para iniciar.</div>';
+    return;
+  }
+  
+  const actualNames = { player: 'Jugador', bank: 'Banca', tie: 'Empate' };
+  
+  el.innerHTML = S.history.map((e, i) => {
+    const pLabel = e.prediction === 'player'
+      ? '<span class="hpred pp">Sug. Jugador</span>'
+      : e.prediction === 'bank'
+        ? '<span class="hpred pb">Sug. Banca</span>'
+        : '<span class="hpred pn">Sin sugerencia</span>';
+
+    // Si result es 'void', mostramos simplemente qué salió sin evaluar victoria o derrota
+    const oLabel = e.result === null  ? '<span class="hout pend">Pendiente...</span>'
+      : e.result === 'void' ? `<span class="hout tie">— Salió: ${actualNames[e.actualResult]}</span>`
+      : e.result === 'win'  ? '<span class="hout win"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg> Acierto</span>'
+      : e.result === 'loss' ? '<span class="hout loss"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg> Fallo</span>'
+      :                       '<span class="hout tie">— Empate</span>';
+
+    return `
+      <div class="hitem">
+        <div class="hrow">
+          <span class="hrnd">Ronda ${e.id}</span>
+          <div style="display:flex; gap:8px; align-items:center;">${pLabel}${oLabel}</div>
+        </div>
+        <div class="hpills">
+          <span class="hpill" style="color:var(--player); border-color:rgba(59,130,246,0.2)">J: ${e.votes.player} (${e.pctP}%)</span>
+          <span class="hpill" style="color:var(--tie); border-color:rgba(16,185,129,0.2)">E: ${e.votes.tie} (${e.pctT}%)</span>
+          <span class="hpill" style="color:var(--bank); border-color:rgba(239,68,68,0.2)">B: ${e.votes.bank} (${e.pctB}%)</span>
+        </div>
+      </div>`;
+  }).join('');
+}
+
+function assignR(idx, actual) {
+  const pendingIdx = S.history.findIndex(e => e.result === null);
+  if (pendingIdx === -1) return;
+  const e = S.history[pendingIdx];
+  e.actualResult = actual;
+  
+  // Novedad: Si NO hubo predicción clara, el resultado es 'void' (neutro).
+  if (e.prediction === null) {
+    e.result = 'void';
+  } else if (actual === 'tie') {
+    e.result = 'tie';
+  } else {
+    e.result = (e.prediction === actual) ? 'win' : 'loss';
+  }
+  
+  if (e.result==='win')  S.stats.wins++;
+  if (e.result==='loss') S.stats.losses++;
+  if (e.result==='tie')  S.stats.ties++;
+  
+  document.getElementById('sW').textContent = S.stats.wins;
+  document.getElementById('sL').textContent = S.stats.losses;
+  document.getElementById('sT').textContent = S.stats.ties;
+  // Solo se suman a las Rondas Totales aquellas que realmente se evaluaron
+  document.getElementById('totalB').textContent = (S.stats.wins+S.stats.losses+S.stats.ties);
+  
+  updateStreak(e.result);
+  renderHistory();
+  softReset();
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+// ═══════════════════════════════════════════
+//  STREAK + LED
+// ═══════════════════════════════════════════
+function updateStreak(result) {
+  const c = S.cfg;
+
+  // Si no hubo predicción (void), se ignora por completo. La racha se mantiene intacta.
+  if (result === 'void') {
+    return;
+  }
+
+  // EXCEPCIÓN: Si es empate y no estamos configurados para rastrear empates,
+  // ignoramos el proceso. La racha y tipo actuales se mantienen intactos.
+  if (result === 'tie' && !c.trackTie) {
+    return;
+  }
+
+  const tracked =
+    (result==='loss' && c.trackLoss) ||
+    (result==='win'  && c.trackWin)  ||
+    (result==='tie'  && c.trackTie);
+
+  if (tracked) {
+    S.streak = (S.streakType === result) ? S.streak + 1 : 1;
+    S.streakType = result;
+  } else {
+    S.streak = 0; 
+    S.streakType = null;
+  }
+  
+  document.getElementById('streakVal').textContent = S.streak;
+
+  const thMap = { loss: c.lossN, win: c.winN, tie: c.tieN };
+  const currentTh = S.streakType ? thMap[S.streakType] : null;
+
+  const led = document.getElementById('ledEl');
+  if (S.streakType && currentTh !== null && S.streak >= currentTh) {
+    led.className = 'led ' + (c.ledColor === 'green' ? 'green' : 'red');
+  } else {
+    led.className = 'led';
+  }
+}
+
+// ═══════════════════════════════════════════
+//  CONFIG
+// ═══════════════════════════════════════════
+function openCfg() {
+  const c = S.cfg;
+  document.getElementById('cfgTh').value = c.threshold;
+  document.getElementById('cfgLN').value = c.lossN;
+  document.getElementById('cfgWN').value = c.winN;
+  document.getElementById('cfgTN').value = c.tieN;
+  document.getElementById('togL').checked = c.trackLoss;
+  document.getElementById('togW').checked = c.trackWin;
+  document.getElementById('togT').checked = c.trackTie;
+  pickLed(c.ledColor, false);
+  document.getElementById('cfgModal').classList.add('show');
+}
+function closeCfg() { document.getElementById('cfgModal').classList.remove('show'); }
+function saveCfg() {
+  const c = S.cfg;
+  c.threshold = Math.max(1, Math.min(99, parseInt(document.getElementById('cfgTh').value)||55));
+  c.lossN = Math.max(1, parseInt(document.getElementById('cfgLN').value)||3);
+  c.winN  = Math.max(1, parseInt(document.getElementById('cfgWN').value)||3);
+  c.tieN  = Math.max(1, parseInt(document.getElementById('cfgTN').value)||3);
+  c.trackLoss = document.getElementById('togL').checked;
+  c.trackWin  = document.getElementById('togW').checked;
+  c.trackTie  = document.getElementById('togT').checked;
+  closeCfg();
+  toast('Configuración guardada exitosamente');
+}
+function pickLed(color, save=true) {
+  if (save) S.cfg.ledColor = color;
+  document.getElementById('lRed').className   = 'ledo' + (color==='red'   ? ' sr' : '');
+  document.getElementById('lGreen').className = 'ledo' + (color==='green' ? ' sg' : '');
+}
+document.getElementById('cfgModal').addEventListener('click', e => { if(e.target===e.currentTarget) closeCfg(); });
+
+// ═══════════════════════════════════════════
+//  TOAST
+// ═══════════════════════════════════════════
+function toast(msg) {
+  const el = document.getElementById('toast');
+  el.textContent = msg; el.classList.add('show');
+  clearTimeout(toast._t);
+  toast._t = setTimeout(() => el.classList.remove('show'), 2500);
+}
+</script>
+</body>
+</html>

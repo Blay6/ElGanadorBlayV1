@@ -532,6 +532,11 @@
           <div class="crow"><div><div class="clbl">Activar tras Aciertos</div></div><input type="number" class="ninp" id="cfgWN" value="3" min="1"></div>
           <div class="crow"><div><div class="clbl">Activar tras Empates</div></div><input type="number" class="ninp" id="cfgTN" value="3" min="1"></div>
         </div>
+        
+        <div class="tog-row" style="margin-top: 8px;">
+          <div><div class="tog-name">Mantener LED Activo</div><div class="tog-desc">Hasta romper racha (off: se apaga al superarla)</div></div>
+          <label class="switch"><input type="checkbox" id="togKeep"><span class="slider"></span></label>
+        </div>
       </div>
       
       <div>
@@ -581,6 +586,7 @@ const S = {
   cfg: {
     threshold: 55,
     lossN: 3, winN: 3, tieN: 3,
+    keepLed: false, /* Novedad: Mantiene LED activo en vez de apagarlo */
     trackLoss: true, trackWin: false, trackTie: false,
     ledColor: 'red'
   }
@@ -616,13 +622,11 @@ function setText(id, v) { document.getElementById(id).textContent = v; }
 function setW(id, w)    { document.getElementById(id).style.width = w + '%'; }
 
 // ═══════════════════════════════════════════
-//  PASTE + ADD (MEJORADO)
+//  PASTE + ADD 
 // ═══════════════════════════════════════════
 
-// Función para limpiar el texto copiado (ej: "$ 1,500.00" -> 1500)
 function extractNumberFromText(txt) {
   if (!txt) return 0;
-  // Extrae solo los dígitos del texto copiado (ignora letras, comas y símbolos)
   const match = txt.match(/\d+/g); 
   return match ? parseInt(match.join(''), 10) : 0;
 }
@@ -632,7 +636,6 @@ async function pasteAndAdd(type) {
   let usedClipboard = false;
 
   try {
-    // Intentamos leer el portapapeles
     if (navigator.clipboard && navigator.clipboard.readText) {
       const txt = await navigator.clipboard.readText();
       val = extractNumberFromText(txt);
@@ -645,27 +648,22 @@ async function pasteAndAdd(type) {
   const ids = { player:'inP', tie:'inT', bank:'inB' };
   const inputEl = document.getElementById(ids[type]);
 
-  // Si no había nada válido en el portapapeles, intentamos usar lo que esté escrito en el input
   if (val <= 0) {
     val = parseInputVal(ids[type]);
   }
 
-  // Si al final no hay un valor válido, mostramos alerta y salimos
   if (val <= 0) { 
     toast('Copia un número válido o escríbelo primero'); 
     inputEl.focus();
     return; 
   }
 
-  // Registramos el voto
   commitVote(type, val);
 
-  // Damos feedback visual de que se pegó correctamente
   if (usedClipboard) {
     toast(`+${val} pegado desde el portapapeles`);
   }
 
-  // Limpiamos el input y lo volvemos a enfocar
   inputEl.value = '';
   inputEl.focus();
 }
@@ -721,13 +719,11 @@ function processRound() {
 
   let winner = null;
   
-  // NUEVA REGLA: Debe haber al menos un voto (o monto > 0) para Jugador Y Banca
   if (player > 0 && bank > 0) {
     if (pctP >= T) winner = 'player';
     else if (pctB >= T) winner = 'bank';
   }
 
-  // Pasamos los valores de player y bank a showResult para poder mostrar el mensaje correcto
   showResult(winner, pctP, pctB, T, player, bank);
 
   const entry = {
@@ -776,7 +772,6 @@ function showResult(winner, pctP, pctB, T, playerAmt, bankAmt) {
     title.style.color = 'var(--text-bright)';
     title.textContent = 'Sin Predicción Clara';
     
-    // Adaptamos el mensaje de error según la razón por la que no hay predicción
     if (playerAmt === 0 || bankAmt === 0) {
       sub.textContent = 'Se requiere al menos un ingreso en Jugador y Banca';
     } else {
@@ -830,7 +825,6 @@ function renderHistory() {
         ? '<span class="hpred pb">Sug. Banca</span>'
         : '<span class="hpred pn">Sin sugerencia</span>';
 
-    // Si result es 'void', mostramos simplemente qué salió sin evaluar victoria o derrota
     const oLabel = e.result === null  ? '<span class="hout pend">Pendiente...</span>'
       : e.result === 'void' ? `<span class="hout tie">— Salió: ${actualNames[e.actualResult]}</span>`
       : e.result === 'win'  ? '<span class="hout win"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg> Acierto</span>'
@@ -858,7 +852,6 @@ function assignR(idx, actual) {
   const e = S.history[pendingIdx];
   e.actualResult = actual;
   
-  // Novedad: Si NO hubo predicción clara, el resultado es 'void' (neutro).
   if (e.prediction === null) {
     e.result = 'void';
   } else if (actual === 'tie') {
@@ -874,7 +867,6 @@ function assignR(idx, actual) {
   document.getElementById('sW').textContent = S.stats.wins;
   document.getElementById('sL').textContent = S.stats.losses;
   document.getElementById('sT').textContent = S.stats.ties;
-  // Solo se suman a las Rondas Totales aquellas que realmente se evaluaron
   document.getElementById('totalB').textContent = (S.stats.wins+S.stats.losses+S.stats.ties);
   
   updateStreak(e.result);
@@ -886,19 +878,33 @@ function assignR(idx, actual) {
 // ═══════════════════════════════════════════
 //  STREAK + LED
 // ═══════════════════════════════════════════
+
+function updateLEDStatus() {
+  const c = S.cfg;
+  const thMap = { loss: c.lossN, win: c.winN, tie: c.tieN };
+  const currentTh = S.streakType ? thMap[S.streakType] : null;
+
+  const led = document.getElementById('ledEl');
+  if (S.streakType && currentTh !== null) {
+    
+    // Verificamos si se debe encender o apagar el LED según la nueva configuración
+    const ledActive = c.keepLed ? (S.streak >= currentTh) : (S.streak === currentTh);
+    
+    if (ledActive) {
+      led.className = 'led ' + (c.ledColor === 'green' ? 'green' : 'red');
+    } else {
+      led.className = 'led';
+    }
+  } else {
+    led.className = 'led';
+  }
+}
+
 function updateStreak(result) {
   const c = S.cfg;
 
-  // Si no hubo predicción (void), se ignora por completo. La racha se mantiene intacta.
-  if (result === 'void') {
-    return;
-  }
-
-  // EXCEPCIÓN: Si es empate y no estamos configurados para rastrear empates,
-  // ignoramos el proceso. La racha y tipo actuales se mantienen intactos.
-  if (result === 'tie' && !c.trackTie) {
-    return;
-  }
+  if (result === 'void') return;
+  if (result === 'tie' && !c.trackTie) return;
 
   const tracked =
     (result==='loss' && c.trackLoss) ||
@@ -914,16 +920,8 @@ function updateStreak(result) {
   }
   
   document.getElementById('streakVal').textContent = S.streak;
-
-  const thMap = { loss: c.lossN, win: c.winN, tie: c.tieN };
-  const currentTh = S.streakType ? thMap[S.streakType] : null;
-
-  const led = document.getElementById('ledEl');
-  if (S.streakType && currentTh !== null && S.streak >= currentTh) {
-    led.className = 'led ' + (c.ledColor === 'green' ? 'green' : 'red');
-  } else {
-    led.className = 'led';
-  }
+  
+  updateLEDStatus();
 }
 
 // ═══════════════════════════════════════════
@@ -935,25 +933,35 @@ function openCfg() {
   document.getElementById('cfgLN').value = c.lossN;
   document.getElementById('cfgWN').value = c.winN;
   document.getElementById('cfgTN').value = c.tieN;
+  document.getElementById('togKeep').checked = c.keepLed;
   document.getElementById('togL').checked = c.trackLoss;
   document.getElementById('togW').checked = c.trackWin;
   document.getElementById('togT').checked = c.trackTie;
   pickLed(c.ledColor, false);
   document.getElementById('cfgModal').classList.add('show');
 }
-function closeCfg() { document.getElementById('cfgModal').classList.remove('show'); }
+
+function closeCfg() { 
+  document.getElementById('cfgModal').classList.remove('show'); 
+}
+
 function saveCfg() {
   const c = S.cfg;
   c.threshold = Math.max(1, Math.min(99, parseInt(document.getElementById('cfgTh').value)||55));
   c.lossN = Math.max(1, parseInt(document.getElementById('cfgLN').value)||3);
   c.winN  = Math.max(1, parseInt(document.getElementById('cfgWN').value)||3);
   c.tieN  = Math.max(1, parseInt(document.getElementById('cfgTN').value)||3);
+  c.keepLed   = document.getElementById('togKeep').checked;
   c.trackLoss = document.getElementById('togL').checked;
   c.trackWin  = document.getElementById('togW').checked;
   c.trackTie  = document.getElementById('togT').checked;
+  
+  // Actualiza visualmente el LED en caso de haber cambiado la configuración en plena racha
+  updateLEDStatus();
   closeCfg();
   toast('Configuración guardada exitosamente');
 }
+
 function pickLed(color, save=true) {
   if (save) S.cfg.ledColor = color;
   document.getElementById('lRed').className   = 'ledo' + (color==='red'   ? ' sr' : '');

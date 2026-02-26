@@ -586,14 +586,14 @@ const S = {
   cfg: {
     threshold: 55,
     lossN: 3, winN: 3, tieN: 3,
-    keepLed: false, /* Novedad: Mantiene LED activo en vez de apagarlo */
+    keepLed: false, 
     trackLoss: true, trackWin: false, trackTie: false,
     ledColor: 'red'
   }
 };
 
 // ═══════════════════════════════════════════
-//  LIVE CALC
+//  LIVE CALC & INPUT FILTERS
 // ═══════════════════════════════════════════
 function liveCalc() {
   const vP = parseInputVal('inP');
@@ -604,7 +604,27 @@ function liveCalc() {
 }
 
 function parseInputVal(id) {
-  const v = parseInt(document.getElementById(id).value);
+  const el = document.getElementById(id);
+  let valStr = el.value;
+  
+  // Normalizar eliminando 'ceros' a la izquierda si los hay ("085" -> "85")
+  while (valStr.length > 1 && valStr.charAt(0) === '0') {
+    valStr = valStr.substring(1);
+  }
+  
+  // Implementación del Filtro: si tiene más de 1 cifra y la primera (izquierda) es 8, se elimina.
+  let changed = false;
+  while (valStr.length > 1 && valStr.charAt(0) === '8') {
+    valStr = valStr.substring(1);
+    changed = true;
+  }
+  
+  // Actualiza visualmente el input si aplicó filtro
+  if (changed || valStr !== el.value) {
+    el.value = valStr;
+  }
+  
+  const v = parseInt(valStr, 10);
   return isNaN(v) || v < 0 ? 0 : v;
 }
 
@@ -628,7 +648,21 @@ function setW(id, w)    { document.getElementById(id).style.width = w + '%'; }
 function extractNumberFromText(txt) {
   if (!txt) return 0;
   const match = txt.match(/\d+/g); 
-  return match ? parseInt(match.join(''), 10) : 0;
+  if (!match) return 0;
+  
+  let valStr = match.join('');
+  
+  // Normalizar 'ceros'
+  while (valStr.length > 1 && valStr.charAt(0) === '0') {
+    valStr = valStr.substring(1);
+  }
+  
+  // Implementación del filtro al pegar (Omitir 8 si está a la izquierda y length > 1)
+  while (valStr.length > 1 && valStr.charAt(0) === '8') {
+    valStr = valStr.substring(1);
+  }
+  
+  return parseInt(valStr, 10) || 0;
 }
 
 async function pasteAndAdd(type) {

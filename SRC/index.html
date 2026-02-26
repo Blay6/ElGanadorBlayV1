@@ -225,7 +225,7 @@
   .btn-plus:hover { background: var(--vc); border-color: var(--vc); color: #fff; }
   .btn-plus:active { transform: scale(0.95); }
 
-  /* PROCESS / RESET */
+  /* PROCESS / RESET / NUEVA SESIÓN */
   .action-row { display: flex; gap: 12px; align-items: center; flex-wrap: wrap; }
   .btn-proc {
     flex: 2; background: var(--text-bright); color: var(--bg-base); border: none;
@@ -243,6 +243,15 @@
     cursor: pointer; transition: all .2s;
   }
   .btn-rst:hover { background: rgba(239, 68, 68, 0.1); border-color: var(--bank); color: var(--bank); }
+
+  /* Nuevo Botón Sesión */
+  .btn-ns {
+    flex: 1; background: transparent; border: 1px solid var(--border-light); color: var(--accent);
+    padding: 16px; border-radius: var(--radius-sm); min-width: 120px;
+    font-family: 'Inter', sans-serif; font-size: 13px; font-weight: 500;
+    cursor: pointer; transition: all .2s;
+  }
+  .btn-ns:hover { background: rgba(59, 130, 246, 0.1); border-color: var(--accent); }
 
   /* STATS */
   .stats-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; }
@@ -280,6 +289,16 @@
   .hpill { font-family: 'JetBrains Mono', monospace; font-size: 10px; padding: 4px 8px; border-radius: 6px; background: rgba(0,0,0,0.3); border: 1px solid var(--border); }
   
   .hempty { text-align: center; padding: 48px 20px; color: var(--text-dim); font-size: 13px; line-height: 1.6; }
+
+  /* Divisor de Nueva Sesión */
+  .h-divider {
+    display: flex; align-items: center; justify-content: center; gap: 12px;
+    margin: 16px 0 8px 0; color: var(--text-dim); font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 1px;
+    animation: slideIn .3s ease;
+  }
+  .h-divider::before, .h-divider::after {
+    content: ''; height: 1px; background: var(--border-light); flex: 1;
+  }
 
   /* CONFIG MODAL */
   .overlay {
@@ -468,9 +487,11 @@
             </div>
           </div>
 
+          <!-- Modificación solicitada: Botón Nueva Sesión agregado -->
           <div class="action-row">
             <button class="btn-proc" onclick="processRound()">Procesar Ronda</button>
             <button class="btn-rst" onclick="hardReset()">Resetear Valores</button>
+            <button class="btn-ns" onclick="newSession()">Nueva Sesión</button>
           </div>
         </div>
       </div>
@@ -593,7 +614,7 @@ const S = {
 };
 
 // ═══════════════════════════════════════════
-//  LIVE CALC & INPUT FILTERS
+//  LIVE CALC
 // ═══════════════════════════════════════════
 function liveCalc() {
   const vP = parseInputVal('inP');
@@ -604,27 +625,7 @@ function liveCalc() {
 }
 
 function parseInputVal(id) {
-  const el = document.getElementById(id);
-  let valStr = el.value;
-  
-  // Normalizar eliminando 'ceros' a la izquierda si los hay ("085" -> "85")
-  while (valStr.length > 1 && valStr.charAt(0) === '0') {
-    valStr = valStr.substring(1);
-  }
-  
-  // Implementación del Filtro: si tiene más de 1 cifra y la primera (izquierda) es 8, se elimina.
-  let changed = false;
-  while (valStr.length > 1 && valStr.charAt(0) === '8') {
-    valStr = valStr.substring(1);
-    changed = true;
-  }
-  
-  // Actualiza visualmente el input si aplicó filtro
-  if (changed || valStr !== el.value) {
-    el.value = valStr;
-  }
-  
-  const v = parseInt(valStr, 10);
+  const v = parseInt(document.getElementById(id).value);
   return isNaN(v) || v < 0 ? 0 : v;
 }
 
@@ -648,21 +649,7 @@ function setW(id, w)    { document.getElementById(id).style.width = w + '%'; }
 function extractNumberFromText(txt) {
   if (!txt) return 0;
   const match = txt.match(/\d+/g); 
-  if (!match) return 0;
-  
-  let valStr = match.join('');
-  
-  // Normalizar 'ceros'
-  while (valStr.length > 1 && valStr.charAt(0) === '0') {
-    valStr = valStr.substring(1);
-  }
-  
-  // Implementación del filtro al pegar (Omitir 8 si está a la izquierda y length > 1)
-  while (valStr.length > 1 && valStr.charAt(0) === '8') {
-    valStr = valStr.substring(1);
-  }
-  
-  return parseInt(valStr, 10) || 0;
+  return match ? parseInt(match.join(''), 10) : 0;
 }
 
 async function pasteAndAdd(type) {
@@ -840,11 +827,46 @@ function hardReset() {
 }
 
 // ═══════════════════════════════════════════
+//  NUEVA SESIÓN
+// ═══════════════════════════════════════════
+function newSession() {
+  if (!confirm('¿Seguro que deseas iniciar una nueva sesión? Esto reiniciará tus rondas, racha y rendimiento actuales.')) return;
+  
+  // Reinicio de variables clave
+  S.round = 0; // Se vuelve a 0, y softReset() lo sumará a 1
+  S.stats = { wins: 0, losses: 0, ties: 0 };
+  S.streak = 0;
+  S.streakType = null;
+  
+  // Actualización del panel de Rendimiento
+  document.getElementById('sW').textContent = 0;
+  document.getElementById('sL').textContent = 0;
+  document.getElementById('sT').textContent = 0;
+  document.getElementById('totalB').textContent = '0 Totales';
+  
+  // Actualización del LED
+  document.getElementById('streakVal').textContent = 0;
+  updateLEDStatus();
+  
+  // Agregar divisor al historial
+  const timeStr = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+  S.history.unshift({ type: 'divider', time: timeStr });
+  
+  softReset();
+  renderHistory();
+  toast('Nueva sesión iniciada exitosamente');
+}
+
+// ═══════════════════════════════════════════
 //  HISTORY
 // ═══════════════════════════════════════════
 function renderHistory() {
   const el = document.getElementById('hList');
-  document.getElementById('hCount').textContent = S.history.length;
+  
+  // Contar los registros excluyendo los divisores de sesión
+  const validRecords = S.history.filter(x => x.type !== 'divider').length;
+  document.getElementById('hCount').textContent = validRecords + ' Registros';
+  
   if (!S.history.length) {
     el.innerHTML = '<div class="hempty">El historial está vacío.<br>Procesa tu primera ronda para iniciar.</div>';
     return;
@@ -853,6 +875,12 @@ function renderHistory() {
   const actualNames = { player: 'Jugador', bank: 'Banca', tie: 'Empate' };
   
   el.innerHTML = S.history.map((e, i) => {
+    // Si es un divisor de sesión
+    if (e.type === 'divider') {
+      return `<div class="h-divider"><span>Nueva Sesión • ${e.time}</span></div>`;
+    }
+
+    // Si es un registro de ronda normal
     const pLabel = e.prediction === 'player'
       ? '<span class="hpred pp">Sug. Jugador</span>'
       : e.prediction === 'bank'
@@ -901,7 +929,7 @@ function assignR(idx, actual) {
   document.getElementById('sW').textContent = S.stats.wins;
   document.getElementById('sL').textContent = S.stats.losses;
   document.getElementById('sT').textContent = S.stats.ties;
-  document.getElementById('totalB').textContent = (S.stats.wins+S.stats.losses+S.stats.ties);
+  document.getElementById('totalB').textContent = (S.stats.wins+S.stats.losses+S.stats.ties) + ' Totales';
   
   updateStreak(e.result);
   renderHistory();
